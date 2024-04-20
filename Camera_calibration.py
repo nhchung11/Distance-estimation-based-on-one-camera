@@ -99,24 +99,24 @@ undistortedImg = cv2.undistort(img, mtx, dist, None, mtx)
 # undistortedImg = undistortedImg[y:y + h, x:x + w]
 fx, fy, height, ppx, ppy, width = mtx[0][0], mtx[1][1], h, mtx[0][2], mtx[1][2], w
 rk1, rk2, tp1, tp2, rk3 = dist[0]
-print(
-    f'\n'
-    f'"intrinsic_parameters": {{\n'
-    f'   "fx": {fx},\n'
-    f'   "fy": {fy},\n'
-    f'   "height_px": {height},\n'
-    f'   "ppx": {ppx},\n'
-    f'   "ppy": {ppy},\n'
-    f'   "width_px": {width}\n'
-    f' }},\n'
-    f' "distortion_parameters": {{\n'
-    f'   "rk1": {rk1},\n'
-    f'   "rk2": {rk2},\n'
-    f'   "rk3": {rk3},\n'
-    f'   "tp1": {tp1},\n'
-    f'   "tp2": {tp2}\n'
-    f' }},\n'
-)
+# Open the file in write mode
+with open('output.txt', 'w') as f:
+    # Write the output to the file
+    f.write(
+        f'   {fx}\n'
+        f'   {fy}\n'
+        f'   {height}\n'
+        f'   {ppx}\n'
+        f'   {ppy}\n'
+        f'   {width}\n'
+        
+        f'   {rk1}\n'
+        f'   {rk2}\n'
+        f'   {rk3}\n'
+        f'   {tp1}\n'
+        f'   {tp2}\n'
+        f' '
+    )
 
 # Display the final result
 if showGui:
