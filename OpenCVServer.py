@@ -4,8 +4,8 @@ import pickle
 import numpy as np
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# ip = "192.168.2.236"
-ip = "127.0.0.1"
+ip = "192.168.0.7"
+# ip = "127.0.0.1"
 port = 6666
 s.bind((ip, port))
 

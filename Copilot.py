@@ -1,18 +1,19 @@
-import json
+import cv2
 
-# Open the file in read mode
-with open(r'D:\python\Distance_measurement\output.txt', 'r') as f:
-    # Read the file content
-    content = f.read()
+# Load the image
+image = cv2.imread(r"D:\python\Distance_measurement\height4_1.jpg")
 
-# Parse the JSON data
-# data = json.loads(content)
+# Get the dimensions of the image
+height, width, _ = image.shape
 
-# # Extract the parameters
-# intrinsic_parameters = data['intrinsic_parameters']
-# distortion_parameters = data['distortion_parameters']
+# Calculate the center coordinates
+center_x = width // 2
+center_y = height // 2
 
-# # Print the parameters
-# print('Intrinsic Parameters: ', intrinsic_parameters)
-# print('Distortion Parameters: ', distortion_parameters)
-print(content)
+# Draw a red circle at the center point
+cv2.circle(image, (center_x, center_y), 5, (0, 0, 255), -1)
+print(center_x, center_y)
+
+cv2.imshow("Rescaled Image with Center Point", image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
