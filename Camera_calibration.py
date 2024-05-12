@@ -60,7 +60,8 @@ for (index, path) in enumerate(imagesToParse):
         if showGui:
             # Draw the corners on the image
             cv2.drawChessboardCorners(img, (rows, cols), corners, ret)
-
+    else:
+        print(f"Warning: Chessboard not found in image {index+1}")
     if showGui:
         # Display the image
         cv2.imshow('chess board', img)
@@ -99,24 +100,24 @@ undistortedImg = cv2.undistort(img, mtx, dist, None, mtx)
 # undistortedImg = undistortedImg[y:y + h, x:x + w]
 fx, fy, height, ppx, ppy, width = mtx[0][0], mtx[1][1], h, mtx[0][2], mtx[1][2], w
 rk1, rk2, tp1, tp2, rk3 = dist[0]
-# Open the file in write mode
-with open('output.txt', 'w') as f:
-    # Write the output to the file
-    f.write(
-        f'   {fx}\n'
-        f'   {fy}\n'
-        f'   {height}\n'
-        f'   {ppx}\n'
-        f'   {ppy}\n'
-        f'   {width}\n'
-        
-        f'   {rk1}\n'
-        f'   {rk2}\n'
-        f'   {rk3}\n'
-        f'   {tp1}\n'
-        f'   {tp2}\n'
-        f' '
-    )
+print(
+    f'\n'
+    f'"intrinsic_parameters": {{\n'
+    f'   "fx": {fx},\n'
+    f'   "fy": {fy},\n'
+    f'   "height_px": {height},\n'
+    f'   "ppx": {ppx},\n'
+    f'   "ppy": {ppy},\n'
+    f'   "width_px": {width}\n'
+    f' }},\n'
+    f' "distortion_parameters": {{\n'
+    f'   "rk1": {rk1},\n'
+    f'   "rk2": {rk2},\n'
+    f'   "rk3": {rk3},\n'
+    f'   "tp1": {tp1},\n'
+    f'   "tp2": {tp2}\n'
+    f' }},\n'
+)
 
 # Display the final result
 if showGui:
@@ -166,7 +167,6 @@ tvecs (array([[-0.49730172],
        [24.43715573]]))
 imageSize (2592, 1944)
 Total error:  0.09477064110633412
-
 "intrinsic_parameters": {
    "fx": 2440.9540138328043,
    "fy": 2434.6728574963054,
