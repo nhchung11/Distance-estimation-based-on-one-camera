@@ -127,6 +127,10 @@ if showGui:
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+
+# Chuyển đổi vector xoay của ảnh đầu tiên thành ma trận xoay
+rotation_matrix, _ = cv2.Rodrigues(rvecs[0])
+print("Rotation Matrix for the first view:", rotation_matrix)
 '''
 Output:
 ret 0.6908937569159879
