@@ -5,10 +5,12 @@ import numpy as np
 import time
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-ip = "192.168.0.9"
+ip = "192.168.0.102"
 # ip = "127.0.0.1"
 port = 6666
 s.bind((ip, port))
+counter = 4
+start_time = time.time()
 
 while True:
     x = s.recvfrom(1000000)
@@ -25,14 +27,17 @@ while True:
     center = (w//2, h//2)
 
     # Draw the center point
-    cv2.circle(img, center, radius=5, color=(0, 255, 0), thickness=-1)
+    # cv2.circle(img, center, radius=5, color=(0, 255, 0), thickness=-1)
     # print(type(img))
     cv2.imshow('Img Server', img)
+    if time.time() - start_time >= 10:
+        cv2.imwrite(f'human_{counter}.jpg', img)
+        counter += 1
+        print(f"Frame {counter} saved")
+        break
+
     if cv2.waitKey(5) & 0xFF == 27:
         break
     
-    time.sleep(10)
-    cv2.imwrite('captured_image01.jpg', img)
     # Destroy all windows
-    cv2.destroyAllWindows()
-    break
+cv2.destroyAllWindows()
