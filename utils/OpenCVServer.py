@@ -5,12 +5,11 @@ import numpy as np
 import time
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-ip = "192.168.0.102"
+ip = "192.168.0.103"
 # ip = "127.0.0.1"
 port = 6666
 s.bind((ip, port))
-counter = 4
-start_time = time.time()
+counter = 34
 
 while True:
     x = s.recvfrom(1000000)
@@ -30,11 +29,10 @@ while True:
     # cv2.circle(img, center, radius=5, color=(0, 255, 0), thickness=-1)
     # print(type(img))
     cv2.imshow('Img Server', img)
-    if time.time() - start_time >= 10:
-        cv2.imwrite(f'human_{counter}.jpg', img)
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        cv2.imwrite(f'frame_{counter}.jpg', img)
         counter += 1
         print(f"Frame {counter} saved")
-        break
 
     if cv2.waitKey(5) & 0xFF == 27:
         break

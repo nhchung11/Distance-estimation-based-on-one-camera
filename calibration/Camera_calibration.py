@@ -62,6 +62,7 @@ for (index, path) in enumerate(imagesToParse):
             cv2.drawChessboardCorners(img, (rows, cols), corners, ret)
     else:
         print(f"Warning: Chessboard not found in image {index+1}")
+        print(f"{path}")
     if showGui:
         # Display the image
         cv2.imshow('chess board', img)
