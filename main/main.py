@@ -24,14 +24,31 @@ fx, fy = 917.17, 922.16                                 # Focal length
 CONFIDENCE_THRESHOLD = 0.8                              # Confidence threshold
 GREEN = (0, 255, 0)                                     # BGR color
 track_history = defaultdict(lambda: [])                 # Track history
+P = (int(w/2), int(h/2), 0)                             # Principle point
+a, b, c = 0, 0, alpha
 
 # Intrinsic matrix
 mtrx = matrix = np.array([[fx, 0, w/2], 
                           [0, fy, h/2], 
                           [0, 0, 1]])
 
-# Principle point
-ox, oy = w/2, h/2
+# Rotation matrix
+Rz = np.array([[np.cos(np.radians(a)), -np.sin(np.radians(a)), 0],
+               [np.sin(np.radians(a)), np.cos(np.radians(a)), 0],
+               [0, 0, 1]])
+Ry = np.array([[np.cos(np.radians(b)), 0, np.sin(np.radians(b))],
+               [0, 1, 0],
+               [-np.sin(np.radians(b)), 0, np.cos(np.radians(b))]])  
+Rx = np.array([[1, 0, 0],
+               [0, np.cos(np.radians(c)), -np.sin(np.radians(c))],
+               [0, np.sin(np.radians(c)), np.cos(np.radians(c))]])
+R = np.dot(Rz, np.dot(Ry, Rx))
+R_inv = np.linalg.inv(R)
+
+# Camera in world coordinate
+cw = np.array([[0], [d], [-H]])
+t = np.dot(R, cw)
+tx, ty, tz = t[0][0], t[1][0], t[2][0]
 
 # Check if video opened successfully
 if not cap.isOpened():
