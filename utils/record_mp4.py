@@ -11,7 +11,7 @@ port = 6666
 s.bind((ip, port))
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Define the codec and create a VideoWriter object
-out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (1024, 768))
+out = cv2.VideoWriter('output_1.mp4', fourcc, 20.0, (1024, 768))
 
 start_time = time.time()  # Start time for capturing video
 
@@ -30,8 +30,8 @@ while(True):
         out.write(img)
         cv2.imshow('frame', img)
 
-        # If 20 seconds have passed since the start, stop capturing video
-        if current_time - start_time >= 20:
+        # If 20 seconds have passed since the start, stop capturing vi  deo
+        if current_time - start_time >= 30:
             break
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
