@@ -1,0 +1,6 @@
+numpy
+opencv-python
+ultralytics
+pickle5
+Pillow
+tkintermapview

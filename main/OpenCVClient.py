@@ -8,12 +8,12 @@ import numpy as np
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET,socket.SO_SNDBUF,1000000)
 
-server_ip = "192.168.0.102"
-# server_ip = "127.0.0.1"
+# server_ip = "192.168.2.236"
+server_ip = "127.0.0.1"
 server_port = 6666
 
 
-cap = cv2.VideoCapture("/dev/video0")
+cap = cv2.VideoCapture(0)
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 

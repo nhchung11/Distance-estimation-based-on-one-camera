@@ -3,19 +3,21 @@ import cv2
 from ultralytics import YOLO
 import cv2
 import math
-import folium
-import matplotlib.pyplot as plt
-import supervision as sv
 from collections import defaultdict
-
+import pickle
+import socket
+from tkinter import *
+import tkintermapview
+from PIL import Image, ImageTk
+import threading
+import math
 
 # INPUTS
 model = YOLO("yolov8n.pt")                              # YOLO model
-cap = cv2.VideoCapture(r"D:\python\output.mp4")         # Video capture
-H = 1.22                                                # UAV height (m)
-d = 4.2                                                 # UAV distance to world coordiante origin (m)
-p = 50                                                  # Compass angle (degree)
-alpha = 75                                              # Camera angle (degree)
+H = 4.47                                                # UAV height (m)
+d = 17.65                                                 # UAV distance to world coordiante origin (m)
+p = 90                                                  # Compass angle (degree)
+alpha = 78                                             # Camera angle (degree)
 f = 3.29                                                # Focal length (mm)
 s_w, s_h = 3.67, 2.74                                   # Sensor size (mm)
 w, h = 1024, 768                                        # Resolution (pixcel)
@@ -25,8 +27,9 @@ CONFIDENCE_THRESHOLD = 0.75                             # Confidence threshold
 GREEN = (0, 255, 0)                                     # BGR color
 track_history = defaultdict(lambda: [])                 # Track history
 P = (int(w/2), int(h/2), 0)                             # Principle point
-UAV_lat, UAV_lon = 21.0261309, 105.8328612              # UAV latitude and longitude
+UAV_lat, UAV_lon = 21.0058026,105.8425124               # UAV latitude and longitude
 a, b, c = 0, 0, alpha
+
 
 # Intrinsic matrix
 mtrx = matrix = np.array([[fx, 0, w/2], 
@@ -57,61 +60,113 @@ cw = np.array([[0], [d], [-H]])
 t = np.dot(R, cw)
 tx, ty, tz = t[0][0], t[1][0], t[2][0]
 
-# Check if video opened successfully
-if not cap.isOpened():
-    print("Error opening video file")
 
-# Read until video is completed
-while cap.isOpened():
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    if ret:
-        detections = model(frame, verbose=False)[0]
-        for data in detections.boxes.data.tolist():
-            # extract the confidence (i.e., probability) associated with the detection
-            confidence = data[4]
-            class_id = data[5]
-            # filter out weak detections by ensuring the 
-            # confidence is greater than the minimum confidence
-            if float(confidence) < CONFIDENCE_THRESHOLD or int(class_id) != 0:
-                continue
+# Open video source
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# ip = "127.0.0.1"
+ip = "192.168.253.8"
+port = 6666
+s.bind((ip, port))
 
-            # if the confidence is greater than the minimum confidence,
-            # draw the bounding box on the frame
-            xmin, ymin, xmax, ymax = int(data[0]), int(data[1]), int(data[2]), int(data[3])
-            xf = int((xmin + xmax) / 2)
-            yf = int(ymax)
-            x_over_z = (xf - P[0]) / fx
-            y_over_z = (yf - P[1]) / fy
-            zc = (r31*tx + r32*ty + r33*tz) / (r31*x_over_z + r32*y_over_z + r33)
-            Xc = np.array([[x_over_z*zc], [y_over_z*zc], [zc]])
-            Xw = -np.dot(R_inv, (Xc - t))
-            cv2.rectangle(frame, (xmin, ymin) , (xmax, ymax), GREEN, 2)
-            GO = [0, d]
-            GF = [0 - Xw[0][0], d - Xw[1][0]]
-            cos_theta = (GO[0]*GF[0] + GO[1]*GF[1]) / (math.sqrt(GO[0]**2 + GO[1]**2) * math.sqrt(GF[0]**2 + GF[1]**2))
-            theta = np.degrees(np.arccos(cos_theta))
-            distance = math.sqrt(GF[0]**2 + GF[1]**2)
-            length = 0.0001
-            with open ('compass.txt', 'a') as f:
-                if P[0] < xf:
-                    end_lat_direct = UAV_lat + length * math.cos(math.radians(p + theta))
-                    end_lon_direct = UAV_lon + length * math.sin(math.radians(p + theta))
-                else:
-                    end_lat_direct = UAV_lat + length * math.cos(math.radians(p - theta))
-                    end_lon_direct = UAV_lon + length * math.sin(math.radians(p - theta))
-                f.write(f"{end_lat_direct} {end_lon_direct}\n")
-            print("Target: ", end_lat_direct, end_lon_direct)
-            # print("Xw: ", np.round(Xw.T, 6))
-        cv2.imshow("Frame", frame)
-        # Press Q on keyboard to exit
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-    else:
-        break
+root = Tk()
+root.geometry('2048x768')
+main_frame = Frame(root, width=1024, height=768)
+main_frame.pack(fill="both", expand=True)
+# cap = cv2.VideoCapture(0)
 
-# When everything done, release the video capture object
-cap.release()
+map_frame = Frame(main_frame, background="blue")
+map_label = Label(map_frame, text = "Map")
+map_label.place(relx=0.5, rely=0.5,anchor=CENTER)
+map_frame.pack(expand = True, fill = BOTH, side=LEFT)
+map_widget = tkintermapview.TkinterMapView(map_frame, width=1024, height=768)
+map_widget.set_position(UAV_lat, UAV_lon)
 
-# Close all the frames
-cv2.destroyAllWindows()
+def calculate_end_point(lat, lon, distance, angle):
+    # Earth's radius in kilometers
+    R = 6378.1
+    
+    # Convert angle to radians
+    angle_rad = math.radians(angle)
+    
+    # Convert distance to kilometers
+    distance_km = distance / 1000
+    
+    # Calculate end point
+    lat1 = math.radians(lat)
+    lon1 = math.radians(lon)
+    
+    lat2 = math.asin(math.sin(lat1) * math.cos(distance_km / R) +
+                     math.cos(lat1) * math.sin(distance_km / R) * math.cos(angle_rad))
+    
+    lon2 = lon1 + math.atan2(math.sin(angle_rad) * math.sin(distance_km / R) * math.cos(lat1),
+                             math.cos(distance_km / R) - math.sin(lat1) * math.sin(lat2))
+    
+    # Convert back to degrees
+    lat2 = math.degrees(lat2)
+    lon2 = math.degrees(lon2)
+    
+    return lat2, lon2
+
+# Create markers
+marker_1 = map_widget.set_marker(21.003970, 105.842779, "UAV")
+marker_2 = map_widget.set_marker(21.003970, 105.842779, "Target")
+end_lat, end_lon = calculate_end_point(UAV_lat, UAV_lon, 10, p)
+direct = map_widget.set_path([(UAV_lat, UAV_lon), (end_lat, end_lon)])
+map_widget.set_zoom(20)
+map_widget.pack(fill="both", expand=True)
+
+camera_frame = Frame(main_frame, background="red", width=1024, height=768)
+camera_label = Label(camera_frame, text= "Camera")
+camera_label.place(relx=0.5, rely=0.5,anchor=CENTER)
+camera_frame.pack(expand=True, fill=BOTH, side=LEFT)
+
+def show_frame():
+    marker_1.set_position(UAV_lat, UAV_lon)
+    data, addr = s.recvfrom(1000000)
+    frame = pickle.loads(data)
+    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+    results = model(frame, verbose=False)[0]
+    for result in results.boxes.data.tolist():
+        confidence = result[4]
+        class_id = result[5]
+        if float(confidence) < CONFIDENCE_THRESHOLD or int(class_id) != 0:
+            # marker_2.delete()
+            continue
+        
+        xmin, ymin, xmax, ymax = int(result[0]), int(result[1]), int(result[2]), int(result[3])
+        cv2.rectangle(frame, (xmin, ymin) , (xmax, ymax), GREEN, 2)
+        xf = int((xmin + xmax) / 2)
+        yf = int(ymax)
+        x_over_z = (xf - P[0]) / fx
+        y_over_z = (yf - P[1]) / fy
+        zc = (r31*tx + r32*ty + r33*tz) / (r31*x_over_z + r32*y_over_z + r33)
+        Xc = np.array([[x_over_z*zc], [y_over_z*zc], [zc]])
+        Xw = -np.dot(R_inv, (Xc - t))
+        GO = [0, d]
+        GF = [0 - Xw[0][0], d - Xw[1][0]]
+        cos_theta = (GO[0]*GF[0] + GO[1]*GF[1]) / (math.sqrt(GO[0]**2 + GO[1]**2) * math.sqrt(GF[0]**2 + GF[1]**2))
+        theta = np.degrees(np.arccos(cos_theta))
+        distance = math.sqrt(GF[0]**2 + GF[1]**2)
+        length = 0.00001
+        if P[0] < xf:
+            end_lat_direct = UAV_lat + length * math.cos(math.radians(p + theta)) * distance
+            end_lon_direct = UAV_lon + length * math.sin(math.radians(p + theta)) * distance
+        else:
+            end_lat_direct = UAV_lat + length * math.cos(math.radians(p - theta)) * distance
+            end_lon_direct = UAV_lon + length * math.sin(math.radians(p - theta)) * distance
+            
+        marker_2.set_position(end_lat_direct, end_lon_direct)
+        cv2.putText(frame, f"Distance: {distance:.2f} m", (xmin, ymin+35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(frame, f"Angle: {theta:.2f} degree", (xmin, ymin+60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img = Image.fromarray(img)
+    img = ImageTk.PhotoImage(img)
+    
+    camera_label.config(image=img)
+    camera_label.image = img
+    root.after(10, show_frame)
+
+thread = threading.Thread(target=show_frame)
+thread.daemon = True
+thread.start()
+root.mainloop()
