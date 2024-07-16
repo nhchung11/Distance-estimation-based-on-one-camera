@@ -63,8 +63,8 @@ tx, ty, tz = t[0][0], t[1][0], t[2][0]
 
 # Open video source
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# ip = "127.0.0.1"
-ip = "192.168.253.8"
+ip = "127.0.0.1"
+# ip = "192.168.253.8"
 port = 6666
 s.bind((ip, port))
 
